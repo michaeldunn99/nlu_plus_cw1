@@ -1,0 +1,31 @@
+#!/bin/bash
+
+# Define possible values for each hyperparameter
+param1_mode_values=("train-np-rnn" "train-np-gru")
+param2_directory_values=("data")
+param3_hiddendims_values=(10 25 50)
+param4_lookback_values=(0)
+param5_learning_values=(0.5)
+
+counter=0
+# Iterate over all combinations of hyperparameter values
+for param1 in "${param1_mode_values[@]}"; do
+    for param2 in "${param2_directory_values[@]}"; do
+        for param3 in "${param3_hiddendims_values[@]}"; do
+            for param4 in "${param4_lookback_values[@]}"; do
+                for param5 in "${param5_learning_values[@]}"; do
+                        # Determine the appropriate redirection operator
+                        if [ $counter -eq 0 ]; then
+                            # First iteration: overwrite the file
+                            python code/runner.py "$param1" "$param2" "$param3" "$param4" "$param5" > output/np_hyper_param_tuning_2000.txt
+                        else
+                            # Subsequent iterations: append to the file
+                            python code/runner.py "$param1" "$param2" "$param3" "$param4" "$param5" >> output/np_hyper_param_tuning_2000.txt
+                        fi
+                        # Increment the counter
+                        ((counter++))
+                done
+            done
+        done
+    done
+done
