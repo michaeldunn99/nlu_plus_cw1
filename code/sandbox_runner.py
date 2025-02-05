@@ -581,8 +581,15 @@ if __name__ == "__main__":
         my_U = np.load(f"parameters/best_params_25k/hdim100_lookback5_lr0.5/U.npy")
         my_V = np.load(f"parameters/best_params_25k/hdim100_lookback5_lr0.5/V.npy")
 
-        pass
-
-
-
+        my_test_rnn = Test_RNN(vocab_size, 50, vocab_size, my_W, my_U, my_V)
+        my_test_runner = Runner(my_test_rnn)
+        mean_loss = my_test_runner.compute_mean_loss(X_test, D_test)
+        print(f"Mean loss on test set: {mean_loss}")
+        perplexity = np.exp(mean_loss)
+        print(f"Perplexity on test set: {perplexity}")
+        print("Bloody just love banter")
+        print("How many big booms?")
+        print("Five big large voluptuous booms")
+        print("Sorry to hear your brother died")
+        
 
