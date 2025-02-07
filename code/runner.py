@@ -10,6 +10,7 @@ from model import Model
 from rnn import RNN
 from gru import GRU
 from test_rnn import Test_RNN
+import heapq
 
 
 class Runner(object):
@@ -594,6 +595,96 @@ if __name__ == "__main__":
         print("How many big booms?")
         print("Five big large voluptuous booms")
         print("Sorry to hear your brother died")
+    
+    if mode == "rnn_vs_gru_np":
+        train_size = 1000
+        dev_size = 1000
+        vocab_size = 2000
+
+        hdim = int(sys.argv[3])
+        lookback = int(sys.argv[4])
+        lr = float(sys.argv[5])
+
+        # get the data set vocabulary
+        vocab = pd.read_table(data_folder + "/vocab.wiki.txt", header=None, sep="\s+", index_col=0,
+                              names=['count', 'freq'], )
+        num_to_word = dict(enumerate(vocab.index[:vocab_size]))
+        word_to_num = invert_dict(num_to_word)
+
+        # calculate loss vocabulary words due to vocab_size
+        fraction_lost = fraq_loss(vocab, word_to_num, vocab_size)
+        print(
+            "Retained %d words from %d (%.02f%% of all tokens)\n" % (
+            vocab_size, len(vocab), 100 * (1 - fraction_lost)))
+
+        # load training data
+        sents = load_np_dataset(data_folder + '/wiki-train.txt')
+        S_train = docs_to_indices(sents, word_to_num, 0, 0)
+        X_train, D_train = seqs_to_npXY(S_train)
+
+        X_train = X_train[:train_size]
+        Y_train = D_train[:train_size]
+
+        # load development data
+        sents = load_np_dataset(data_folder + '/wiki-dev.txt')
+        S_dev = docs_to_indices(sents, word_to_num, 0, 0)
+        X_dev, D_dev = seqs_to_npXY(S_dev)
+
+        X_dev = X_dev[:dev_size]
+        D_dev = D_dev[:dev_size]
+        
+        output_vocab_size = 2
+        my_np_gru = GRU(vocab_size, hdim, output_vocab_size)
+        my_np_rnn = RNN(vocab_size, hdim, output_vocab_size)
+        my_np_gru_runner = Runner(my_np_gru)
+        my_np_rnn_runner = Runner(my_np_rnn)
+        my_np_gru_runner.train_np(X_train, D_train, X_dev, D_dev,learning_rate = lr, back_steps = lookback)
+        my_np_rnn_runner.train_np(X_train, D_train, X_dev, D_dev,learning_rate = lr, back_steps = lookback)
+
+        #define the heap of losses that stores the loss and the index of the sentence
+        rnn_highest_losses = []
+        gru_highest_losses = []
+
+
+        for i in range(len(X_dev)):
+            current_rnn_loss = my_np_rnn_runner.compute_loss_np(X_dev[i], D_dev[i])
+            current_gru_loss = my_np_gru_runner.compute_loss_np(X_dev[i], D_dev[i])
+
+            if len(rnn_highest_losses) < 25:
+                heapq.heappush(rnn_highest_losses, (current_rnn_loss, current_gru_loss, i))  # Add directly if < 10 elements
+            elif current_rnn_loss > rnn_highest_losses[0][0]:  # Only add if better than the lowest
+                heapq.heapreplace(rnn_highest_losses, (current_rnn_loss, current_gru_loss, i))  # Replace the lowest
+            
+            if len(gru_highest_losses) < 25:
+                heapq.heappush(gru_highest_losses, (current_gru_loss, current_rnn_loss, i))  # Add directly if < 10 elements
+            elif current_gru_loss > gru_highest_losses[0][0]:  # Only add if better than the lowest
+                heapq.heapreplace(gru_highest_losses, (current_gru_loss, current_rnn_loss, i))  # Replace the lowest
+
+        #order the heap by the greatest rnn loss
+        rnn_highest_losses = sorted(rnn_highest_losses, key=lambda x: x[0], reverse=True)
+
+        #order the heap by the greatest gru loss
+        gru_highest_losses = sorted(gru_highest_losses, key=lambda x: x[0], reverse=True)
+
+        #write the 25 highest losses for each model to csv file
+        with open(f"output/lb_{lookback}_rnn_highest_losses.csv", "w") as f:
+            f.write("RNN loss, GRU loss, Sentence index\n")
+            for loss in rnn_highest_losses:
+                f.write(f"{loss[0]}, {loss[1]}, {loss[2]}\n")
+
+        with open(f"output/lb_{lookback}_gru_highest_losses.csv", "w") as f:
+            f.write("GRU loss, RNN loss, Sentence index\n")
+            for loss in gru_highest_losses:
+                f.write(f"{loss[0]}, {loss[1]}, {loss[2]}\n")
+        
+        
+
+        
+
+        
+
+
+
 
 
 
