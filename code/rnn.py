@@ -109,7 +109,7 @@ class RNN(Model):
 
             # Calculate the output layer error (difference between target and predicted output)
             delta_t_out = (current_d - y_t)
-            print(delta_t_out.shape)
+            #print(delta_t_out.shape)
 
             # Accumulate the gradient for W using the outer product of delta_t_out and the hidden state
             outer_product_W_t = delta_t_out @ (np.array(s[t]).reshape(1, -1))
@@ -117,11 +117,11 @@ class RNN(Model):
 
             # Calculate the derivative of the activation function (sigmoid) for the hidden state
             f_dash_net_in = (s[t] * (1 - s[t])).reshape(-1,1)
-            print(f_dash_net_in.shape)
+            #print(f_dash_net_in.shape)
             
             # Calculate the error for the hidden layer
             delta_t_in = (self.W.T @ delta_t_out) * f_dash_net_in
-            print(delta_t_in.shape)
+            #print(delta_t_in.shape)
             # print(outer_product_V_t.shape)
 
             # Accumulate the gradient for V using the outer product of delta_t_in and the input vector

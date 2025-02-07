@@ -3,4 +3,5 @@ venv/
 output/
 data/
 parameters/
+__pycache__/
 
