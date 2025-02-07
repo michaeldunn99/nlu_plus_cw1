@@ -2,6 +2,5 @@ venv/
 .DS_Store
 output/
 data/
-parameters/
 __pycache__/
 

@@ -48,8 +48,6 @@ class Runner(object):
         indices = np.array(d)
         selected_probabilities = prediction_probability_matrix[np.arange(prediction_probability_matrix.shape[0]),indices]
         loss = -np.sum(np.log(selected_probabilities)) 
-
-
         return loss
 
     def compute_loss_np(self, x, d):
@@ -104,6 +102,8 @@ class Runner(object):
         total_loss = 0
         for i, seq in enumerate(X):
             total_loss += self.compute_loss(seq, D[i])
+            if i % 100 == 0:
+                print(f"Computed loss on {i} sentences")
         mean_loss = total_loss / total_length
 
         return mean_loss
@@ -574,14 +574,26 @@ if __name__ == "__main__":
         # load development data
         sents = load_np_dataset(data_folder + '/wiki-test.txt')
         S_test = docs_to_indices(sents, word_to_num, 0, 0)
-        X_test, D_test = seqs_to_npXY(S_test)
+        X_test, D_test = seqs_to_lmXY(S_test)
 
         # load the model
-        my_W = np.load(f"parameters/best_params_25k/hdim100_lookback5_lr0.5/W.npy")
-        my_U = np.load(f"parameters/best_params_25k/hdim100_lookback5_lr0.5/U.npy")
-        my_V = np.load(f"parameters/best_params_25k/hdim100_lookback5_lr0.5/V.npy")
+        my_W = np.load(f"parameters/best_params_25k/hdim50_lookback0_lr0.5/W.npy")
+        my_U = np.load(f"parameters/best_params_25k/hdim50_lookback0_lr0.5/U.npy")
+        my_V = np.load(f"parameters/best_params_25k/hdim50_lookback0_lr0.5/V.npy")
 
-        pass
+        my_test_rnn = Test_RNN(vocab_size, 50, vocab_size, my_U, my_V, my_W)
+        print("Debugging - completed line instantiating Test_RNN")
+        my_test_runner = Runner(my_test_rnn)
+        print("Debugging - completed line instantiating Runner")
+        mean_loss = my_test_runner.compute_mean_loss(X_test, D_test)
+        print("Debugging - completed line computing loss")
+        print(f"Mean loss on test set: {mean_loss}")
+        perplexity = np.exp(mean_loss)
+        print(f"Perplexity on test set: {perplexity}")
+        print("Bloody just love banter")
+        print("How many big booms?")
+        print("Five big large voluptuous booms")
+        print("Sorry to hear your brother died")
 
 
 
